@@ -14,7 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      food_items: {
+        Row: {
+          allergens: string[] | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          ingredients: string[] | null
+          is_available: boolean
+          is_vegan: boolean | null
+          is_vegetarian: boolean | null
+          name: string
+          preparation_time: number | null
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean
+          is_vegan?: boolean | null
+          is_vegetarian?: boolean | null
+          name: string
+          preparation_time?: number | null
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string[] | null
+          is_available?: boolean
+          is_vegan?: boolean | null
+          is_vegetarian?: boolean | null
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          food_item_id: string
+          id: string
+          order_id: string
+          quantity: number
+          special_instructions: string | null
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          food_item_id: string
+          id?: string
+          order_id: string
+          quantity?: number
+          special_instructions?: string | null
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          food_item_id?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          special_instructions?: string | null
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          delivery_address: string
+          delivery_latitude: number | null
+          delivery_longitude: number | null
+          estimated_delivery_time: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string
+          phone: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address: string
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          estimated_delivery_time?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          phone: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: string
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          estimated_delivery_time?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          phone?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_admin: boolean
+          latitude: number | null
+          longitude: number | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_admin?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_admin?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
