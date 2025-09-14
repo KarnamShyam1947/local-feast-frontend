@@ -28,14 +28,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAdminStatus = useCallback(async (currentUser: User) => {
     try {
-      const { data, error } = await supabase
+      // Narrow types here to avoid deep TS instantiation from the generated Supabase types
+      const { data, error } = await (supabase as any)
         .from('profiles')
         .select('is_admin')
         .eq('id', currentUser.id)
         .single();
-      
+
       if (!error && data) {
-        setIsAdmin(data.is_admin === true);
+        setIsAdmin(Boolean(data.is_admin));
       } else {
         setIsAdmin(false);
       }
