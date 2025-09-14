@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LoginDialog } from "@/components/auth/LoginDialog";
+import { Cart } from "@/components/Cart";
 
 const Header = () => {
   const { user, signOut, isAdmin } = useAuth();
@@ -74,9 +75,8 @@ const Header = () => {
 
           {/* Desktop Auth & Cart */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
+            <Cart />
+            
             
             {user ? (
               <DropdownMenu>

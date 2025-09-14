@@ -1,40 +1,75 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import Header from '@/components/Header';
+import { FoodCard } from '@/components/FoodCard';
+import { RestaurantCard } from '@/components/RestaurantCard';
+import SearchAutocomplete from '@/components/SearchAutocomplete';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Filter, Grid, List, MapPin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FoodItem {
   id: string;
   name: string;
   description: string;
   price: number;
-  image_url: string;
-  categories: { name: string; id: string };
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
+  image_url?: string;
+  preparation_time?: number;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  category_id?: string;
 }
 
 const Menu = () => {
-  const { user } = useAuth();
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState('name');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Mock restaurant data
+  const restaurants = [
+    {
+      id: '1',
+      name: 'Bella Italia',
+      cuisine: 'Italian',
+      image_url: '/placeholder-restaurant.jpg',
+      rating: 4.8,
+      delivery_time: '25-35 min',
+      delivery_fee: 2.99,
+      distance: '1.2 km',
+      is_open: true,
+      featured_items: ['Pizza Margherita', 'Pasta Carbonara', 'Tiramisu']
+    },
+    {
+      id: '2',
+      name: 'Spice Garden',
+      cuisine: 'Indian',
+      image_url: '/placeholder-restaurant.jpg',
+      rating: 4.6,
+      delivery_time: '30-40 min',
+      delivery_fee: 1.99,
+      distance: '2.1 km',
+      is_open: true,
+      featured_items: ['Butter Chicken', 'Biryani', 'Naan']
+    },
+    {
+      id: '3',
+      name: 'Fresh & Green',
+      cuisine: 'Healthy',
+      image_url: '/placeholder-restaurant.jpg',
+      rating: 4.7,
+      delivery_time: '20-30 min',
+      delivery_fee: 2.49,
+      distance: '0.8 km',
+      is_open: false,
+      featured_items: ['Buddha Bowl', 'Green Smoothie', 'Quinoa Salad']
+    }
+  ];
 
   useEffect(() => {
     fetchFoodItems();
@@ -42,213 +77,201 @@ const Menu = () => {
   }, []);
 
   const fetchFoodItems = async () => {
-    const { data, error } = await supabase
-      .from('food_items')
-      .select(`
-        *,
-        categories (name, id)
-      `)
-      .eq('is_available', true)
-      .order('name');
+    try {
+      const { data, error } = await supabase
+        .from('food_items')
+        .select('*')
+        .eq('is_available', true);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch menu items",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
       setFoodItems(data || []);
+    } catch (error) {
+      console.error('Error fetching food items:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch categories",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
       setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
-  const filteredItems = selectedCategory === 'all' 
-    ? foodItems 
-    : foodItems.filter(item => item.categories.id === selectedCategory);
-
-  const addToCart = (item: FoodItem) => {
-    setCart(prev => {
-      const existing = prev.find(cartItem => cartItem.id === item.id);
-      if (existing) {
-        return prev.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
+  const filteredItems = foodItems
+    .filter(item => {
+      const matchesCategory = selectedCategory === 'all' || item.category_id === selectedCategory;
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'time':
+          return (a.preparation_time || 30) - (b.preparation_time || 30);
+        default:
+          return a.name.localeCompare(b.name);
       }
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }];
     });
-    toast({
-      title: "Added to cart",
-      description: `${item.name} added to your cart`,
-    });
-  };
 
-  const removeFromCart = (itemId: string) => {
-    setCart(prev => {
-      const existing = prev.find(cartItem => cartItem.id === itemId);
-      if (existing && existing.quantity > 1) {
-        return prev.map(cartItem =>
-          cartItem.id === itemId
-            ? { ...cartItem, quantity: cartItem.quantity - 1 }
-            : cartItem
-        );
-      }
-      return prev.filter(cartItem => cartItem.id !== itemId);
-    });
-  };
-
-  const getItemQuantity = (itemId: string) => {
-    return cart.find(cartItem => cartItem.id === itemId)?.quantity || 0;
-  };
-
-  const getTotalAmount = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-primary">
+        <Header />
+        <div className="container mx-auto px-4 pt-32">
+          <div className="text-center text-white">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            Loading delicious food...
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">Our Menu</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Discover our delicious selection of fresh, locally-sourced meals prepared with love
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-primary">
+      <Header />
+      
+      <main className="container mx-auto px-4 pt-32 pb-12">
+        {/* Search and Location */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Discover Amazing Food
+          </h1>
+          <p className="text-white/90 text-lg mb-6">
+            Order from the best restaurants in your area
+          </p>
+          
+          <div className="max-w-2xl mx-auto mb-6">
+            <SearchAutocomplete 
+              onSearch={handleSearch}
+              placeholder="Search for food, restaurants..."
+            />
+          </div>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 justify-center">
-        <Button
-          variant={selectedCategory === 'all' ? 'default' : 'outline'}
-          onClick={() => setSelectedCategory('all')}
-          className={selectedCategory === 'all' ? 'bg-gradient-primary' : ''}
-        >
-          All Items
-        </Button>
-        {categories.map((category) => (
-          <Button
-            key={category.id}
-            variant={selectedCategory === category.id ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory(category.id)}
-            className={selectedCategory === category.id ? 'bg-gradient-primary' : ''}
-          >
-            {category.name}
-          </Button>
-        ))}
-      </div>
+          <div className="flex items-center justify-center gap-2 text-white/90">
+            <MapPin className="w-4 h-4" />
+            <span className="text-sm">Delivering to Central Business District</span>
+          </div>
+        </div>
 
-      {/* Menu Items */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <CardHeader className="p-0">
-              <img
-                src={item.image_url}
-                alt={item.name}
-                className="w-full h-48 object-cover"
-              />
-            </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <Badge variant="secondary">{item.categories.name}</Badge>
-              </div>
-              <p className="text-muted-foreground text-sm">{item.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-primary">₹{item.price}</span>
+        {/* Tabs for Restaurants and Food */}
+        <Tabs defaultValue="restaurants" className="space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 glass-card bg-white/20 backdrop-blur-sm">
+            <TabsTrigger value="restaurants" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+              Restaurants
+            </TabsTrigger>
+            <TabsTrigger value="food" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+              All Food
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="restaurants" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {restaurants.map((restaurant) => (
+                <RestaurantCard key={restaurant.id} {...restaurant} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="food" className="space-y-6">
+            {/* Filters and Controls */}
+            <div className="glass-card bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-elegant">
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge variant="outline" className="text-sm">
+                    {filteredItems.length} items
+                  </Badge>
+                  
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name A-Z</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="time">Preparation Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="flex items-center gap-2">
-                  {getItemQuantity(item.id) > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="font-semibold w-8 text-center">
-                        {getItemQuantity(item.id)}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => addToCart(item)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => addToCart(item)}
-                      className="bg-gradient-primary hover:opacity-90"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  )}
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="hover-scale"
+                  >
+                    <Grid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="hover-scale"
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Cart Summary */}
-      {cart.length > 0 && (
-        <Card className="fixed bottom-4 right-4 w-80 shadow-lg">
-          <CardHeader>
-            <h3 className="font-semibold flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Cart ({cart.length} items)
-            </h3>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span>{item.name} x {item.quantity}</span>
-                <span>₹{(item.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-            <div className="border-t pt-2 flex justify-between font-semibold">
-              <span>Total</span>
-              <span>₹{getTotalAmount().toFixed(2)}</span>
             </div>
-            <Button 
-              className="w-full bg-gradient-primary hover:opacity-90"
-              disabled={!user}
-            >
-              {user ? 'Proceed to Checkout' : 'Login to Order'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
+            {/* Food Items Grid */}
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="glass-card bg-white/95 backdrop-blur-sm rounded-2xl p-8 max-w-md mx-auto">
+                  <Filter className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No items found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your filters or search terms
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  : 'md:grid-cols-1 lg:grid-cols-2'
+              }`}>
+                {filteredItems.map((item) => (
+                  <FoodCard key={item.id} {...item} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
