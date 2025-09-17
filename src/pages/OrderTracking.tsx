@@ -14,12 +14,62 @@ import {
   Star,
   ArrowLeft
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 const OrderTracking = () => {
   const navigate = useNavigate();
-  const [orderStatus, setOrderStatus] = useState(2); // 0: placed, 1: preparing, 2: on the way, 3: delivered
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [orderData, setOrderData] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [estimatedTime, setEstimatedTime] = useState(25);
+
+  const orderId = searchParams.get('order');
+
+  // Fetch order data
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (!orderId || !user) return;
+
+      try {
+        // Fetch order details
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (orderError) throw orderError;
+
+        // Fetch order items with food item details
+        const { data: items, error: itemsError } = await supabase
+          .from('order_items')
+          .select(`
+            *,
+            food_items (
+              name,
+              image_url
+            )
+          `)
+          .eq('order_id', orderId);
+
+        if (itemsError) throw itemsError;
+
+        setOrderData(order);
+        setOrderItems(items || []);
+      } catch (error) {
+        console.error('Error fetching order:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderData();
+  }, [orderId, user]);
 
   // Simulate order progress
   useEffect(() => {
@@ -29,6 +79,20 @@ const OrderTracking = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  const getOrderStatus = (status: string) => {
+    switch (status) {
+      case 'pending': return 0;
+      case 'confirmed': return 1;
+      case 'preparing': return 1;
+      case 'ready': return 2;
+      case 'on_the_way': return 2;
+      case 'delivered': return 3;
+      default: return 0;
+    }
+  };
+
+  const orderStatus = orderData ? getOrderStatus(orderData.status) : 0;
 
   const statusSteps = [
     { 
@@ -57,26 +121,39 @@ const OrderTracking = () => {
     }
   ];
 
-  const orderDetails = {
-    orderId: "FB-2024-001234",
-    restaurant: "Spice Garden Indian Kitchen",
-    items: [
-      { name: "Chicken Biryani", quantity: 1, price: 15.99 },
-      { name: "Garlic Naan", quantity: 2, price: 3.99 },
-      { name: "Mango Lassi", quantity: 1, price: 4.99 }
-    ],
-    total: 28.96,
-    deliveryAddress: "123 Main Street, Apt 4B, Downtown District",
-    phone: "+91 98765 43210",
-    paymentMethod: "Credit Card ****1234"
-  };
-
   const driverInfo = {
     name: "Raj Kumar",
     phone: "+91 98765 43211",
     rating: 4.8,
     vehicle: "Honda Activa - DL 8C 1234"
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!orderData) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
+            <p className="text-muted-foreground mb-4">
+              We couldn't find the order you're looking for.
+            </p>
+            <Button onClick={() => navigate('/')}>Go Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -91,7 +168,7 @@ const OrderTracking = () => {
             Back to Home
           </Button>
           <h1 className="text-3xl font-bold">Track Your Order</h1>
-          <p className="text-muted-foreground">Order #{orderDetails.orderId}</p>
+          <p className="text-muted-foreground">Order #{orderData.id.slice(0, 8)}</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -207,8 +284,8 @@ const OrderTracking = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">RESTAURANT</h4>
-                  <p className="font-medium">{orderDetails.restaurant}</p>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">ORDER STATUS</h4>
+                  <Badge variant="secondary">{orderData.status.replace('_', ' ').toUpperCase()}</Badge>
                 </div>
 
                 <Separator />
@@ -216,10 +293,10 @@ const OrderTracking = () => {
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-2">ITEMS</h4>
                   <div className="space-y-2">
-                    {orderDetails.items.map((item, index) => (
+                    {orderItems.map((item, index) => (
                       <div key={index} className="flex justify-between text-sm">
-                        <span>{item.quantity}x {item.name}</span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span>{item.quantity}x {item.food_items?.name || 'Unknown Item'}</span>
+                        <span>${item.total_price.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -229,24 +306,24 @@ const OrderTracking = () => {
 
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span>${orderDetails.total.toFixed(2)}</span>
+                  <span>${orderData.total_amount.toFixed(2)}</span>
                 </div>
 
                 <Separator />
 
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-2">DELIVERY ADDRESS</h4>
-                  <p className="text-sm">{orderDetails.deliveryAddress}</p>
+                  <p className="text-sm">{orderData.delivery_address}</p>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-2">PHONE</h4>
-                  <p className="text-sm">{orderDetails.phone}</p>
+                  <p className="text-sm">{orderData.phone}</p>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-2">PAYMENT</h4>
-                  <p className="text-sm">{orderDetails.paymentMethod}</p>
+                  <p className="text-sm">{orderData.payment_method.replace('_', ' ').toUpperCase()}</p>
                 </div>
 
                 {orderStatus >= 3 && (

@@ -13,6 +13,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
   const { items, totalAmount, updateQuantity, removeItem } = useCart();
@@ -47,13 +48,69 @@ const Checkout = () => {
       return;
     }
 
-    // Here you would integrate with your backend to create the order
-    toast({
-      title: "Order Placed Successfully!",
-      description: "Your order has been confirmed. You'll receive updates via SMS.",
-    });
-    
-    navigate('/order-tracking');
+    if (!orderData.address || !orderData.phone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Calculate estimated delivery time (30-45 minutes from now)
+      const estimatedDelivery = new Date();
+      estimatedDelivery.setMinutes(estimatedDelivery.getMinutes() + 30 + Math.random() * 15);
+
+      // Create the order in the database
+      const { data: newOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          delivery_address: orderData.address,
+          phone: orderData.phone,
+          total_amount: total,
+          payment_method: orderData.paymentMethod,
+          estimated_delivery_time: estimatedDelivery.toISOString(),
+          notes: orderData.notes || `Tip: $${tip.toFixed(2)}`,
+          status: 'pending',
+          payment_status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: newOrder.id,
+        food_item_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.price * item.quantity,
+        special_instructions: item.special_instructions || null
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: "Order Placed Successfully!",
+        description: "Your order has been confirmed. You'll receive updates via SMS.",
+      });
+      
+      navigate(`/order-tracking?order=${newOrder.id}`);
+    } catch (error: any) {
+      console.error('Error placing order:', error);
+      toast({
+        title: "Order Failed",
+        description: error.message || "Failed to place order. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (items.length === 0) {
