@@ -69,6 +69,8 @@ export default {
         'soft': 'var(--shadow-soft)',
         'medium': 'var(--shadow-medium)',
         'large': 'var(--shadow-large)',
+        'glow': 'var(--shadow-glow)',
+        'elegant': 'var(--shadow-elegant)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -112,6 +114,10 @@ export default {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" }
         },
+        "float-delayed": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-15px)" }
+        },
         "shimmer": {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" }
@@ -131,6 +137,7 @@ export default {
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "slide-out-right": "slide-out-right 0.3s ease-out",
         "float": "float 3s ease-in-out infinite",
+        "float-delayed": "float-delayed 3s ease-in-out infinite 1s",
         "shimmer": "shimmer 2s linear infinite",
         "pulse-slow": "pulse-slow 3s ease-in-out infinite",
         "enter": "fade-in 0.3s ease-out, scale-in 0.2s ease-out",

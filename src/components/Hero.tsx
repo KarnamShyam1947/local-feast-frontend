@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MapPin, Clock, Star, Truck, Search, ShoppingCart } from "lucide-react";
 import { useState, useEffect } from "react";
+import FoodCarousel from "@/components/FoodCarousel";
 import heroFood from "@/assets/hero-food.jpg";
 
 const Hero = () => {
@@ -117,32 +118,27 @@ const Hero = () => {
           </div>
 
           <div className="relative hidden lg:block animate-fade-in">
-            <div className="relative overflow-hidden rounded-3xl shadow-glow">
-              <img 
-                src={heroSlides[currentSlide].image} 
-                alt="Fresh food and groceries ready for delivery" 
-                className="w-full h-[500px] object-cover transition-transform duration-700 hover:scale-105"
-              />
-              {/* Floating Cards */}
-              <Card className="absolute -bottom-6 -left-6 p-4 glass-card bg-white/95 backdrop-blur-sm shadow-elegant animate-float">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
-                    <Truck className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Fast Delivery</p>
-                    <p className="text-sm text-muted-foreground">Track in real-time</p>
-                  </div>
+            <FoodCarousel />
+            
+            {/* Floating Cards */}
+            <Card className="absolute -bottom-6 -left-6 p-4 glass-card bg-white/95 backdrop-blur-sm shadow-elegant animate-float z-20">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-white" />
                 </div>
-              </Card>
-              
-              <Card className="absolute top-6 right-6 p-3 glass-card bg-white/90 backdrop-blur-sm shadow-elegant animate-float-delayed">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-primary">⭐ 4.8</div>
-                  <div className="text-xs text-muted-foreground">Customer Rating</div>
+                <div>
+                  <p className="font-semibold text-foreground">Fast Delivery</p>
+                  <p className="text-sm text-muted-foreground">Track in real-time</p>
                 </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
+            
+            <Card className="absolute top-6 right-6 p-3 glass-card bg-white/90 backdrop-blur-sm shadow-elegant animate-float z-20">
+              <div className="text-center">
+                <div className="text-lg font-bold text-primary">⭐ 4.8</div>
+                <div className="text-xs text-muted-foreground">Customer Rating</div>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
