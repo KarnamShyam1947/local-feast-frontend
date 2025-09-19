@@ -3,12 +3,18 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Clock, Star, Truck, Search, ShoppingCart } from "lucide-react";
 import { useState, useEffect } from "react";
 import FoodCarousel from "@/components/FoodCarousel";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
+import LocationDetector from "@/components/LocationDetector";
 import heroFood from "@/assets/hero-food.jpg";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
   const [userLocation, setUserLocation] = useState<string>("Detecting location...");
+
+  const handleLocationUpdate = (location: string, coordinates?: { lat: number; lng: number }) => {
+    setUserLocation(location);
+  };
 
   const heroSlides = [
     {
@@ -51,9 +57,8 @@ const Hero = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="text-center lg:text-left animate-fade-in">
-            <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6 glass-card">
-              <MapPin className="w-4 h-4 text-secondary-light mr-2" />
-              <span className="text-white/90 text-sm">{userLocation}</span>
+            <div className="mb-6">
+              <LocationDetector onLocationUpdate={handleLocationUpdate} />
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
@@ -65,23 +70,15 @@ const Hero = () => {
             </p>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="mb-8">
-              <div className="flex max-w-md mx-auto lg:mx-0">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search for food, groceries..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-white/95 backdrop-blur-sm rounded-l-2xl border-0 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-                <Button type="submit" variant="cta" className="rounded-l-none rounded-r-2xl px-8">
-                  Search
-                </Button>
-              </div>
-            </form>
+            <div className="mb-8 max-w-md mx-auto lg:mx-0">
+              <SearchAutocomplete 
+                onSearch={(query) => {
+                  setSearchQuery(query);
+                  console.log("Searching for:", query);
+                }}
+                placeholder="Search for food, groceries..."
+              />
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button variant="hero" size="lg" className="text-lg px-8 py-3 hover-scale">

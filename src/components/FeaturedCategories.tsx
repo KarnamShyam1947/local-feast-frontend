@@ -1,130 +1,194 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { ChevronRight, Utensils, Coffee, Pizza, IceCream, Salad, Cookie } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Pizza, 
-  Sandwich, 
-  Coffee, 
-  Apple, 
-  ShoppingCart, 
-  Clock,
-  Heart,
-  Zap
-} from "lucide-react";
-import deliveryService from "@/assets/delivery-service.jpg";
-import groceries from "@/assets/groceries.jpg";
+
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  itemCount: number;
+  icon: React.ReactNode;
+  color: string;
+  gradient: string;
+  popular: boolean;
+  estimatedTime: string;
+}
 
 const FeaturedCategories = () => {
-  const foodCategories = [
-    { icon: Pizza, name: "Pizza & Italian", count: "25+ items", color: "bg-red-100 text-red-600" },
-    { icon: Sandwich, name: "Burgers & Wraps", count: "18+ items", color: "bg-orange-100 text-orange-600" },
-    { icon: Coffee, name: "Beverages", count: "30+ items", color: "bg-amber-100 text-amber-600" },
-    { icon: Apple, name: "Healthy Bowls", count: "15+ items", color: "bg-green-100 text-green-600" },
-  ];
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
-  const features = [
+  const categories: Category[] = [
     {
-      icon: Clock,
-      title: "Quick Delivery",
-      description: "Fresh food delivered in 30 minutes or less",
+      id: "main-course",
+      name: "Main Course",
+      description: "Hearty meals and comfort food",
+      itemCount: 45,
+      icon: <Utensils className="w-8 h-8" />,
+      color: "text-orange-600",
+      gradient: "from-orange-400 to-red-500",
+      popular: true,
+      estimatedTime: "25-35 min"
     },
     {
-      icon: Heart,
-      title: "Made with Love",
-      description: "Every dish prepared fresh in our cloud kitchen",
+      id: "pizza",
+      name: "Pizza & Italian",
+      description: "Wood-fired pizzas and pasta",
+      itemCount: 28,
+      icon: <Pizza className="w-8 h-8" />,
+      color: "text-red-600",
+      gradient: "from-red-400 to-pink-500",
+      popular: true,
+      estimatedTime: "20-30 min"
     },
     {
-      icon: Zap,
-      title: "Zero Contact",
-      description: "Safe, contactless delivery to your doorstep",
+      id: "beverages",
+      name: "Beverages",
+      description: "Fresh juices and hot drinks",
+      itemCount: 32,
+      icon: <Coffee className="w-8 h-8" />,
+      color: "text-amber-600",
+      gradient: "from-amber-400 to-orange-500",
+      popular: false,
+      estimatedTime: "10-15 min"
     },
+    {
+      id: "desserts",
+      name: "Desserts",
+      description: "Sweet treats and ice cream",
+      itemCount: 24,
+      icon: <IceCream className="w-8 h-8" />,
+      color: "text-pink-600",
+      gradient: "from-pink-400 to-purple-500",
+      popular: true,
+      estimatedTime: "15-20 min"
+    },
+    {
+      id: "healthy",
+      name: "Healthy Options",
+      description: "Salads, smoothies and nutritious meals",
+      itemCount: 36,
+      icon: <Salad className="w-8 h-8" />,
+      color: "text-green-600",
+      gradient: "from-green-400 to-emerald-500",
+      popular: false,
+      estimatedTime: "20-25 min"
+    },
+    {
+      id: "snacks",
+      name: "Snacks & Bakery",
+      description: "Quick bites and fresh baked goods",
+      itemCount: 41,
+      icon: <Cookie className="w-8 h-8" />,
+      color: "text-yellow-600",
+      gradient: "from-yellow-400 to-amber-500",
+      popular: true,
+      estimatedTime: "15-25 min"
+    }
   ];
 
   return (
-    <section className="py-16 bg-muted/30">
+    <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            What We Deliver
+            Browse by Category
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From hot, fresh meals to daily groceries - we've got everything you need delivered fast
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Discover delicious food organized by your favorite categories
           </p>
         </div>
 
-        {/* Food Categories */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {foodCategories.map((category, index) => (
-            <Card key={index} className="hover:shadow-medium transition-all duration-300 cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <category.icon className="w-8 h-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {categories.map((category) => (
+            <Card 
+              key={category.id}
+              className="group cursor-pointer transition-all duration-500 hover:shadow-large hover:-translate-y-2 overflow-hidden"
+              onMouseEnter={() => setHoveredCategory(category.id)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              <div className={`h-2 bg-gradient-to-r ${category.gradient}`}></div>
+              
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-xl bg-gradient-to-r ${category.gradient} text-white group-hover:scale-110 transition-transform duration-300`}>
+                    {category.icon}
+                  </div>
+                  
+                  <div className="text-right">
+                    {category.popular && (
+                      <Badge className="bg-accent text-accent-foreground mb-2">
+                        Popular
+                      </Badge>
+                    )}
+                    <div className="text-2xl font-bold text-foreground">
+                      {category.itemCount}
+                    </div>
+                    <div className="text-xs text-muted-foreground">items</div>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{category.name}</h3>
-                <p className="text-muted-foreground text-sm">{category.count}</p>
+
+                <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  {category.name}
+                </h3>
+                
+                <p className="text-muted-foreground text-sm mb-4">
+                  {category.description}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    ⏱️ {category.estimatedTime}
+                  </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className={`group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 ${
+                      hoveredCategory === category.id ? "translate-x-1" : ""
+                    }`}
+                  >
+                    Browse
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+
+                {/* Hover overlay effect */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${category.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Grocery & Service Showcase */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          <div>
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-              Fresh Groceries & Daily Essentials
-            </h3>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Skip the trip to the store! Get fresh vegetables, fruits, dairy products, 
-              and pantry essentials delivered alongside your favorite meals.
-            </p>
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
-                <span className="text-foreground">Farm-fresh vegetables and fruits</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
-                <span className="text-foreground">Daily dairy and bakery items</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
-                <span className="text-foreground">Pantry essentials and snacks</span>
-              </div>
+        {/* Quick Stats */}
+        <div className="bg-gradient-subtle rounded-2xl p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <div className="text-3xl font-bold text-primary mb-2">200+</div>
+              <div className="text-sm text-muted-foreground">Total Items</div>
             </div>
-            <Button variant="cta" size="lg">
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Shop Groceries
-            </Button>
-          </div>
-          <div className="relative">
-            <img 
-              src={groceries} 
-              alt="Fresh groceries and vegetables" 
-              className="rounded-2xl shadow-large w-full h-[400px] object-cover"
-            />
+            <div>
+              <div className="text-3xl font-bold text-primary mb-2">6</div>
+              <div className="text-sm text-muted-foreground">Categories</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary mb-2">15</div>
+              <div className="text-sm text-muted-foreground">Min Delivery</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-primary mb-2">4.8★</div>
+              <div className="text-sm text-muted-foreground">Avg Rating</div>
+            </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="text-center hover:shadow-medium transition-all duration-300">
-              <CardHeader>
-                <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* CTA Section */}
+        <div className="text-center mt-12">
+          <Button variant="cta" size="lg" className="px-8">
+            View Full Menu
+            <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </div>
     </section>
