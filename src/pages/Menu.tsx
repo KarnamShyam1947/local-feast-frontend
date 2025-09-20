@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import { FoodCard } from '@/components/FoodCard';
+import FoodCard from '@/components/FoodCard';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
 import { Button } from '@/components/ui/button';
@@ -265,7 +265,19 @@ const Menu = () => {
                   : 'md:grid-cols-1 lg:grid-cols-2'
               }`}>
                 {filteredItems.map((item) => (
-                  <FoodCard key={item.id} {...item} />
+                  <FoodCard key={item.id} item={{
+                    id: item.id,
+                    name: item.name,
+                    description: item.description || '',
+                    price: item.price,
+                    image: item.image_url || '',
+                    category: 'food',
+                    preparationTime: item.preparation_time || 20,
+                    rating: 4.5,
+                    reviewCount: 100,
+                    isVegetarian: item.is_vegetarian,
+                    isVegan: item.is_vegan
+                  }} />
                 ))}
               </div>
             )}

@@ -37,18 +37,17 @@ interface FoodCardProps {
 const FoodCard = ({ item, variant = "default" }: FoodCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const { addToCart, cartItems } = useCart();
+  const { addItem, items } = useCart();
 
-  const cartItem = cartItems.find(cartItem => cartItem.id === item.id);
+  const cartItem = items.find(cartItem => cartItem.id === item.id);
   const quantity = cartItem?.quantity || 0;
 
   const handleAddToCart = () => {
-    addToCart({
+    addItem({
       id: item.id,
       name: item.name,
       price: item.price,
-      image: item.image,
-      quantity: 1
+      image_url: item.image
     });
   };
 
