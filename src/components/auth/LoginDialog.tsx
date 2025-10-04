@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from './AuthProvider';
 import { toast } from '@/hooks/use-toast';
-import { User, Mail, Lock } from 'lucide-react';
+import { User, Mail, Lock, UserIcon } from 'lucide-react';
 
 interface LoginDialogProps {
   open: boolean;
@@ -15,6 +15,7 @@ interface LoginDialogProps {
 
 export const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -38,7 +39,7 @@ export const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
           description: "Welcome back!",
         });
       } else {
-        await signUp(email, password);
+        await signUp(email, password, username);
         toast({
           title: "Success",
           description: "Account created! Please check your email to verify.",
@@ -50,7 +51,7 @@ export const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error,
         variant: "destructive",
       });
     } finally {
@@ -110,6 +111,20 @@ export const LoginDialog = ({ open, onOpenChange }: LoginDialogProps) => {
             </Button>
           </TabsContent>
           <TabsContent value="signup" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup-username">Username</Label>
+              <div className="relative">
+                <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="signup-username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="signup-email">Email</Label>
               <div className="relative">

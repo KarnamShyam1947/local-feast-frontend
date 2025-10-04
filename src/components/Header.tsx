@@ -21,8 +21,10 @@ const Header = () => {
   ];
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    if(confirm("Are you sure?")) {
+      await signOut();
+      window.location.reload();
+    }
   };
 
   return (
@@ -81,8 +83,9 @@ const Header = () => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost">
                     <User className="h-5 w-5" />
+                    {user.username}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
